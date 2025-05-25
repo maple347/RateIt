@@ -166,7 +166,7 @@
 
                 document.getElementById('bookTitle').value = '';
                 document.getElementById('bookAuthor').value = '';
-                loadRatings();
+                loadRatings(); // Перезагружаем список после добавления
                 alert('Оценка добавлена!');
             } catch (error) {
                 console.error('Ошибка сохранения:', error);
@@ -174,7 +174,7 @@
             }
         }
 
-        // Инициализация
+        // Инициализация: Вызываем loadRatings() только после инициализации supabase
         loadRatings();
     </script>
 </body>

@@ -1,120 +1,22 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>RateIt — Рейтинг книг</title>
-    <meta name="description" content="RateIt — голосуй за лучшие книги мира и создавай рейтинги">
-    <style>
-        /* Стили (бизнес-тема) */
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #F5F5F5;
-            color: #333333;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        header {
-            background: #2C3E50;
-            padding: 20px;
-            color: white;
-            text-align: center;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .rating-list {
-            list-style: none;
-            padding: 0;
-            margin: 20px 0;
-        }
-        .rating-item {
-            background: white;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .book-title {
-            font-size: 1.2em;
-            color: #2C3E50;
-        }
-        .book-author {
-            color: #666;
-            margin: 5px 0;
-        }
-        .vote-form {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        input, select, button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            background: #FF6B35;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #e05d2c;
-        }
-    </style>
+    <!-- ... (ваш существующий HTML-код) ... -->
 </head>
 <body>
-    <div class="container">
-        <!-- Шапка -->
-        <header>
-            <h1>RateIt</h1>
-            <p>Голосуй за лучшие книги мира</p>
-        </header>
-
-        <!-- Рейтинг книг -->
-        <div class="rating-section">
-            <h2>Топ книг</h2>
-            <ul class="rating-list" id="ratingList">
-                <!-- Список книг подгрузится из Supabase -->
-            </ul>
-        </div>
-
-        <!-- Форма голосования -->
-        <div class="vote-form">
-            <h2>Добавить оценку</h2>
-            <input type="text" id="bookTitle" placeholder="Название книги">
-            <input type="text" id="bookAuthor" placeholder="Автор">
-            <select id="bookRating">
-                <option value="5">★★★★★ (5)</option>
-                <option value="4">★★★★☆ (4)</option>
-                <option value="3">★★★☆☆ (3)</option>
-                <option value="2">★★☆☆☆ (2)</option>
-                <option value="1">★☆☆☆☆ (1)</option>
-            </select>
-            <button onclick="addRating()">Голосовать!</button>
-        </div>
-    </div>
+    <!-- ... (ваш существующий HTML-код) ... -->
 
     <script src="https://cdn.jsdelivr.net/npm/ @supabase/supabase-js"></script>
     <script>
         // Настройка Supabase
         const supabaseUrl = 'https://cspycataceyozqgkkeny.supabase.co '; // Ваш URL
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHljYXRhY2V5b3pxZ2trZW55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxODAyMDMsImV4cCI6MjA2Mzc1NjIwM30.7qiWK8SjKcFIxt4xtUbfRUaiOSdVWrvKo0x82ZzIJ9Y'; // Ваш Public API Key
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Ваш Public API Key
         const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         // Загрузка данных
         async function loadRatings() {
             try {
-                const { data } = await supabase
-                    .from('ratings')
-                    .select('*');
-                
+                const { data } = await supabase.from('ratings').select('*');
                 const list = document.getElementById('ratingList');
                 list.innerHTML = '';
                 data.forEach(item => {
@@ -129,6 +31,7 @@
                 });
             } catch (error) {
                 console.error('Ошибка загрузки:', error);
+                alert('Не удалось загрузить данные. Проверьте связь с Supabase.');
             }
         }
 
@@ -172,8 +75,10 @@
                 document.getElementById('bookTitle').value = '';
                 document.getElementById('bookAuthor').value = '';
                 loadRatings();
+                alert('Оценка добавлена!');
             } catch (error) {
                 console.error('Ошибка сохранения:', error);
+                alert('Не удалось отправить оценку. Проверьте политики Supabase.');
             }
         }
 

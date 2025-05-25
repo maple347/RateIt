@@ -174,8 +174,10 @@
             }
         }
 
-        // Инициализация: Вызываем loadRatings() только после инициализации supabase
-        loadRatings();
+        // Инициализация: Вызываем loadRatings() только после полной загрузки страницы
+        window.onload = () => {
+            loadRatings();
+        };
     </script>
 </body>
 </html>

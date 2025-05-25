@@ -115,16 +115,18 @@
                 const { data } = await supabase.from('ratings').select('*');
                 const list = document.getElementById('ratingList');
                 list.innerHTML = '';
-                data.forEach(item => {
-                    const li = document.createElement('li');
-                    li.className = 'rating-item';
-                    li.innerHTML = `
-                        <div class="book-title">${item.title}</div>
-                        <div class="book-author">${item.author}</div>
-                        <div>★${item.rating} (голосов: ${item.votes})</div>
-                    `;
-                    list.appendChild(li);
-                });
+                if (data) {
+                    data.forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = 'rating-item';
+                        li.innerHTML = `
+                            <div class="book-title">${item.title}</div>
+                            <div class="book-author">${item.author}</div>
+                            <div>★${item.rating} (голосов: ${item.votes})</div>
+                        `;
+                        list.appendChild(li);
+                    });
+                }
             } catch (error) {
                 console.error('Ошибка загрузки:', error);
                 alert('Не удалось загрузить данные. Проверьте связь с Supabase.');
@@ -175,9 +177,9 @@
         }
 
         // Инициализация: Вызываем loadRatings() только после полной загрузки страницы
-        window.onload = () => {
+        document.addEventListener('DOMContentLoaded', () => {
             loadRatings();
-        };
+        });
     </script>
 </body>
 </html>

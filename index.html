@@ -81,7 +81,7 @@
         <div class="rating-section">
             <h2>Топ книг</h2>
             <ul class="rating-list" id="ratingList">
-                <!-- Список книг подгрузится из localStorage -->
+                <!-- Список книг подгрузится из Supabase -->
             </ul>
         </div>
 
@@ -101,28 +101,39 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/ @supabase/supabase-js"></script>
     <script>
-        // Логика работы
-        let ratings = JSON.parse(localStorage.getItem('ratings')) || [];
+        // Настройка Supabase
+        const supabaseUrl = 'https://cspycataceyozqgkkeny.supabase.co '; // Ваш URL
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHljYXRhY2V5b3pxZ2trZW55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxODAyMDMsImV4cCI6MjA2Mzc1NjIwM30.7qiWK8SjKcFIxt4xtUbfRUaiOSdVWrvKo0x82ZzIJ9Y'; // Ваш Public API Key
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Отобразить рейтинг
-        function renderRatings() {
-            const list = document.getElementById('ratingList');
-            list.innerHTML = '';
-            ratings.forEach(item => {
-                const li = document.createElement('li');
-                li.className = 'rating-item';
-                li.innerHTML = `
-                    <div class="book-title">${item.title}</div>
-                    <div class="book-author">${item.author}</div>
-                    <div>★${item.rating.toFixed(1)} (голосов: ${item.votes})</div>
-                `;
-                list.appendChild(li);
-            });
+        // Загрузка данных
+        async function loadRatings() {
+            try {
+                const { data } = await supabase
+                    .from('ratings')
+                    .select('*');
+                
+                const list = document.getElementById('ratingList');
+                list.innerHTML = '';
+                data.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'rating-item';
+                    li.innerHTML = `
+                        <div class="book-title">${item.title}</div>
+                        <div class="book-author">${item.author}</div>
+                        <div>★${item.rating} (голосов: ${item.votes})</div>
+                    `;
+                    list.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки:', error);
+            }
         }
 
-        // Добавить оценку
-        function addRating() {
+        // Добавление оценки
+        async function addRating() {
             const title = document.getElementById('bookTitle').value.trim();
             const author = document.getElementById('bookAuthor').value.trim();
             const rating = document.getElementById('bookRating').value;
@@ -132,33 +143,42 @@
                 return;
             }
 
-            // Проверяем, существует ли книга
-            const existing = ratings.find(item => 
-                item.title.toLowerCase() === title.toLowerCase() && 
-                item.author.toLowerCase() === author.toLowerCase()
-            );
+            try {
+                // Проверяем, существует ли книга
+                const { data: existingData } = await supabase
+                    .from('ratings')
+                    .select('*')
+                    .eq('title', title)
+                    .eq('author', author)
+                    .single();
 
-            if (existing) {
-                existing.rating = (existing.rating * existing.votes + parseInt(rating)) / (existing.votes + 1);
-                existing.votes++;
-            } else {
-                ratings.push({
-                    title: title,
-                    author: author,
-                    rating: parseInt(rating),
-                    votes: 1
-                });
+                if (existingData) {
+                    // Обновляем существующую запись
+                    const newVotes = existingData.votes + 1;
+                    const newRating = (existingData.rating * existingData.votes + parseInt(rating)) / newVotes;
+
+                    await supabase
+                        .from('ratings')
+                        .update({ rating: newRating, votes: newVotes })
+                        .eq('id', existingData.id);
+                } else {
+                    // Создаем новую запись
+                    await supabase
+                        .from('ratings')
+                        .insert([{ title, author, rating: parseInt(rating), votes: 1 }]);
+                }
+
+                // Очистка формы и обновление списка
+                document.getElementById('bookTitle').value = '';
+                document.getElementById('bookAuthor').value = '';
+                loadRatings();
+            } catch (error) {
+                console.error('Ошибка сохранения:', error);
             }
-
-            // Сохраняем и обновляем
-            localStorage.setItem('ratings', JSON.stringify(ratings));
-            renderRatings();
-            document.getElementById('bookTitle').value = '';
-            document.getElementById('bookAuthor').value = '';
         }
 
         // Инициализация
-        renderRatings();
+        loadRatings();
     </script>
 </body>
 </html>

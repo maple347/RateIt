@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>RateIt — Рейтинг книг</title>
+    <style>
+        /* Стили (бизнес-тема) */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #F5F5F5;
+            color: #333333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            background: #2C3E50;
+            padding: 20px;
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .rating-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+        .rating-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .book-title {
+            font-size: 1.2em;
+            color: #2C3E50;
+        }
+        .book-author {
+            color: #666;
+            margin: 5px 0;
+        }
+        .vote-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #FF6B35;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #e05d2c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка -->
+        <header>
+            <h1>RateIt</h1>
+            <p>Голосуй за лучшие книги мира</p>
+        </header>
+
+        <!-- Рейтинг книг -->
+        <div class="rating-section">
+            <h2>Топ книг</h2>
+            <ul class="rating-list" id="ratingList">
+                <!-- Список книг подгрузится из Supabase -->
+            </ul>
+        </div>
+
+        <!-- Форма голосования -->
+        <div class="vote-form">
+            <h2>Добавить оценку</h2>
+            <input type="text" id="bookTitle" placeholder="Название книги">
+            <input type="text" id="bookAuthor" placeholder="Автор">
+            <select id="bookRating">
+                <option value="5">★★★★★ (5)</option>
+                <option value="4">★★★★☆ (4)</option>
+                <option value="3">★★★☆☆ (3)</option>
+                <option value="2">★★☆☆☆ (2)</option>
+                <option value="1">★☆☆☆☆ (1)</option>
+            </select>
+            <button onclick="addRating()">Голосовать!</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ @supabase/supabase-js"></script>
+    <script>
+        // Инициализация Supabase ДО функций
+        const supabaseUrl = 'https://cspycataceyozqgkkeny.supabase.co ';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Ваш Public API Key
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        console.log('Supabase подключен:', typeof supabase !== 'undefined');
+
+        // Загрузка данных
+        async function loadRatings() {
+            try {
+                const { data } = await supabase.from('ratings').select('*');
+                const list = document.getElementById('ratingList');
+                list.innerHTML = '';
+                data.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'rating-item';
+                    li.innerHTML = `
+                        <div class="book-title">${item.title}</div>
+                        <div class="book-author">${item.author}</div>
+                        <div>★${item.rating} (голосов: ${item.votes})</div>
+                    `;
+                    list.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки:', error);
+                alert('Не удалось загрузить данные. Проверьте связь с Supabase.');
+            }
+        }
+
+        // Добавление оценки
+        async function addRating() {
+            const title = document.getElementById('bookTitle').value.trim();
+            const author = document.getElementById('bookAuthor').value.trim();
+            const rating = document.getElementById('bookRating').value;
+
+            if (!title || !author) {
+                alert('Введите название и автора!');
+                return;
+            }
+
+            try {
+                const { data: existingData } = await supabase
+                    .from('ratings')
+                    .select('*')
+                    .eq('title', title)
+                    .eq('author', author)
+                    .single();
+
+                if (existingData) {
+                    const newVotes = existingData.votes + 1;
+                    const newRating = (existingData.rating * existingData.votes + parseInt(rating)) / newVotes;
+
+                    await supabase
+                        .from('ratings')
+                        .update({ rating: newRating, votes: newVotes })
+                        .eq('id', existingData.id);
+                } else {
+                    await supabase
+                        .from('ratings')
+                        .insert([{ title, author, rating: parseInt(rating), votes: 1 }]);
+                }
+
+                document.getElementById('bookTitle').value = '';
+                document.getElementById('bookAuthor').value = '';
+                loadRatings();
+                alert('Оценка добавлена!');
+            } catch (error) {
+                console.error('Ошибка сохранения:', error);
+                alert('Не удалось отправить оценку. Проверьте политики Supabase.');
+            }
+        }
+
+        // Инициализация
+        loadRatings();
+    </script>
+</body>
+</html>

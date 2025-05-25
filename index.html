@@ -107,6 +107,8 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Ваш Public API Key
         const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+        console.log('Supabase подключен:', typeof supabase !== 'undefined');
+
         // Загрузка данных
         async function loadRatings() {
             try {

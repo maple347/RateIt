@@ -1,185 +1,76 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>RateIt — Рейтинг книг</title>
-    <style>
-        /* Стили (бизнес-тема) */
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #F5F5F5;
-            color: #333333;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        header {
-            background: #2C3E50;
-            padding: 20px;
-            color: white;
-            text-align: center;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .rating-list {
-            list-style: none;
-            padding: 0;
-            margin: 20px 0;
-        }
-        .rating-item {
-            background: white;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .book-title {
-            font-size: 1.2em;
-            color: #2C3E50;
-        }
-        .book-author {
-            color: #666;
-            margin: 5px 0;
-        }
-        .vote-form {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        input, select, button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            background: #FF6B35;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #e05d2c;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Рейтинг книг</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
-        <!-- Шапка -->
-        <header>
-            <h1>RateIt</h1>
-            <p>Голосуй за лучшие книги мира</p>
-        </header>
+<body class="bg-gray-50 text-gray-900">
+  <div class="max-w-3xl mx-auto py-10 px-4" x-data="bookRating()">
+    <h1 class="text-3xl font-bold text-center mb-6">Рейтинг лучших книг</h1>
 
-        <!-- Рейтинг книг -->
-        <div class="rating-section">
-            <h2>Топ книг</h2>
-            <ul class="rating-list" id="ratingList">
-                <!-- Список книг подгрузится из Supabase -->
-            </ul>
-        </div>
+    <template x-if="books.length === 0">
+      <p class="text-center text-gray-500">Загрузка рейтинга...</p>
+    </template>
 
-        <!-- Форма голосования -->
-        <div class="vote-form">
-            <h2>Добавить оценку</h2>
-            <input type="text" id="bookTitle" placeholder="Название книги">
-            <input type="text" id="bookAuthor" placeholder="Автор">
-            <select id="bookRating">
-                <option value="5">★★★★★ (5)</option>
-                <option value="4">★★★★☆ (4)</option>
-                <option value="3">★★★☆☆ (3)</option>
-                <option value="2">★★☆☆☆ (2)</option>
-                <option value="1">★☆☆☆☆ (1)</option>
-            </select>
-            <button onclick="addRating()">Голосовать!</button>
-        </div>
-    </div>
+    <ul class="space-y-4">
+      <template x-for="(book, index) in books" :key="book.id">
+        <li class="bg-white p-4 rounded-xl shadow flex justify-between items-center">
+          <div>
+            <p class="text-lg font-semibold" x-text="book.title"></p>
+            <p class="text-sm text-gray-500" x-text="book.author"></p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xl font-bold" x-text="book.votes"></span>
+            <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600" @click="vote(book.id)">Голосовать</button>
+          </div>
+        </li>
+      </template>
+    </ul>
+  </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/ @supabase/supabase-js"></script>
-    <script>
-        // Инициализация Supabase ДО функций
-        const supabaseUrl = 'https://cspycataceyozqgkkeny.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHljYXRhY2V5b3pxZ2trZW55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxODAyMDMsImV4cCI6MjA2Mzc1NjIwM30.7qiWK8SjKcFIxt4xtUbfRUaiOSdVWrvKo0x82ZzIJ9Y'; // Ваш Public API Key
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  <script>
+    // Конфигурация Firebase (замени своими данными!)
+    const firebaseConfig = {
+     apiKey: "AIzaSyBnPt8dKxxEpzWPK4Q5HrH2DaFZCQTb9-s",
+  authDomain: "rateit-1648c.firebaseapp.com",
+  databaseURL: "https://rateit-1648c-default-rtdb.firebaseio.com",
+  projectId: "rateit-1648c",
+  storageBucket: "rateit-1648c.firebasestorage.app",
+  messagingSenderId: "90337031987",
+  appId: "1:90337031987:web:fe05bb5d5ce8369ba7f046",
+  measurementId: "G-X7BL8EJ33F"
+    };
 
-        console.log('Supabase подключен:', typeof supabase !== 'undefined');
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-        // Загрузка данных
-        async function loadRatings() {
-            try {
-                const { data } = await supabase.from('ratings').select('*');
-                const list = document.getElementById('ratingList');
-                list.innerHTML = '';
-                if (data) {
-                    data.forEach(item => {
-                        const li = document.createElement('li');
-                        li.className = 'rating-item';
-                        li.innerHTML = `
-                            <div class="book-title">${item.title}</div>
-                            <div class="book-author">${item.author}</div>
-                            <div>★${item.rating} (голосов: ${item.votes})</div>
-                        `;
-                        list.appendChild(li);
-                    });
-                }
-            } catch (error) {
-                console.error('Ошибка загрузки:', error);
-                alert('Не удалось загрузить данные. Проверьте связь с Supabase.');
-            }
+    function bookRating() {
+      return {
+        books: [],
+
+        fetchBooks() {
+          db.ref('books').orderByChild('votes').limitToLast(10).on('value', snapshot => {
+            const data = snapshot.val() || {};
+            const list = Object.entries(data).map(([id, value]) => ({ id, ...value }));
+            this.books = list.sort((a, b) => b.votes - a.votes);
+          });
+        },
+
+        vote(bookId) {
+          const bookRef = db.ref('books/' + bookId + '/votes');
+          bookRef.transaction(currentVotes => (currentVotes || 0) + 1);
+        },
+
+        init() {
+          this.fetchBooks();
         }
-
-        // Добавление оценки
-        async function addRating() {
-            const title = document.getElementById('bookTitle').value.trim();
-            const author = document.getElementById('bookAuthor').value.trim();
-            const rating = document.getElementById('bookRating').value;
-
-            if (!title || !author) {
-                alert('Введите название и автора!');
-                return;
-            }
-
-            try {
-                const { data: existingData } = await supabase
-                    .from('ratings')
-                    .select('*')
-                    .eq('title', title)
-                    .eq('author', author)
-                    .single();
-
-                if (existingData) {
-                    const newVotes = existingData.votes + 1;
-                    const newRating = (existingData.rating * existingData.votes + parseInt(rating)) / newVotes;
-
-                    await supabase
-                        .from('ratings')
-                        .update({ rating: newRating, votes: newVotes })
-                        .eq('id', existingData.id);
-                } else {
-                    await supabase
-                        .from('ratings')
-                        .insert([{ title, author, rating: parseInt(rating), votes: 1 }]);
-                }
-
-                document.getElementById('bookTitle').value = '';
-                document.getElementById('bookAuthor').value = '';
-                loadRatings(); // Перезагружаем список после добавления
-                alert('Оценка добавлена!');
-            } catch (error) {
-                console.error('Ошибка сохранения:', error);
-                alert('Не удалось отправить оценку. Проверьте политики Supabase.');
-            }
-        }
-
-        // Инициализация: Вызываем loadRatings() только после полной загрузки страницы
-        document.addEventListener('DOMContentLoaded', () => {
-            loadRatings();
-        });
-    </script>
+      };
+    }
+  </script>
 </body>
 </html>
